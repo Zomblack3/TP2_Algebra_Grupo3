@@ -7,6 +7,24 @@ using namespace std;
 
 const int recSides = 8;
 
+enum VERTEX_Z_POS
+{
+	IN,
+	OUT
+};
+
+enum VERTEX_Y_POS
+{
+	UP,
+	DOWN
+};
+
+enum VERTEX_X_POS
+{
+	RIGHT,
+	LEFT
+};
+
 struct Line
 {
 	Vector3 startingPos = { };
@@ -20,24 +38,30 @@ struct VertexLines
 	Line A = { };
 	Line B = { };
 	Line C = { };
+
+	VERTEX_X_POS posX = RIGHT;
+	VERTEX_Y_POS posY = DOWN;
+	VERTEX_Z_POS posZ = OUT;
+
+	int id = 0;
 };
 
 const int windowWidth = 750;
 const int windowHeight = 600;
 
-Line line1 = { };
-Line line2 = { };
-Line line3;
-
 void update(Camera3D& camera);
-void draw(Camera3D camera, VertexLines vertexLines, VertexLines vertexLines2);
+void draw(Camera3D camera, VertexLines vertexLines[], int amountOfVertexs);
 
-void setVertexLines(VertexLines& vertexLines, float startingPosX, float startingPosY, float startingPosZ);
-void printVertexLines(VertexLines vertexLines);
+void setVertexLines(VertexLines& vertexLines, float startingPosX, float startingPosY, float startingPosZ, float lenght);
+void printVertexLines(VertexLines vertexLines[], int amountOfVertexs);
+
+float vectorMagnitude(Vector3 v);
 
 int main()
 {
 	srand(time(nullptr));
+
+	const int amountOfVertexs = 8;
 
 	Camera3D camera = { 0 };
 	camera.position = { 0.0f, 00.0f, 10.0f };
@@ -49,37 +73,79 @@ int main()
 	//Line lineA = { {0,0,0}, {2,0,0}, RED };   // vector A
 	//Line lineB = { {0,0,0}, {0,-2,0}, GREEN }; // vector B (90° en XY)
 
-	int randStartingPos = rand() % 20;
+	int randLength = rand() % 20;
 
-	VertexLines verLinesPos = { };
-	VertexLines verLinesPos2 = { };
+	VertexLines verLinesPos[amountOfVertexs] = { };
 
-	setVertexLines(verLinesPos, randStartingPos, randStartingPos, randStartingPos);
-	setVertexLines(verLinesPos2, verLinesPos.A.endingPos.x, verLinesPos2.A.startingPos.y, verLinesPos2.A.startingPos.z);
+	for (int i = 0; i < amountOfVertexs; i++)
+	{
+		// A = Y || B = X || C = Z
+		switch (i + 1)
+		{
+		case 1:
 
-	/*line1.startingPos = { float(randStartingPos), float(randStartingPos), float(randStartingPos) };
-	line1.endingPos = { float(randStartingPos) * 2, float(randStartingPos) * 2, float(randStartingPos) * 2 };
-	line2.startingPos = { line1.endingPos.x, line1.startingPos.y, line1.endingPos.z };
-	line2.endingPos = { line1.endingPos.x * -1.0f, line1.endingPos.y, line1.endingPos.z * 2 };*/
+			setVertexLines(verLinesPos[i], 0, 0, 0, randLength);
 
-	/*Vector3 A = line1.endingPos;
-	Vector3 B = line2.endingPos;
-	Vector3 C = { };*/
+			break;
+		case 2:
 
-	/*C.x = A.y * B.z - A.z * B.y;
-	C.y = A.z * B.x - A.x * B.z;
-	C.z = A.x * B.y - A.y * B.x;*/
+			verLinesPos[i].posY = UP;
 
-	//line3 = { {0,0,0}, C, WHITE };
+			setVertexLines(verLinesPos[i], verLinesPos[(i - 1)].A.endingPos.x, verLinesPos[(i - 1)].A.endingPos.y, verLinesPos[(i - 1)].A.endingPos.z, randLength);
 
-	/*line.startingPos.x = 5 + rand() % 10;
-	line.startingPos.y = 5 + rand() % 10;
-	line.startingPos.z = 5 + rand() % 10;*/
+			break;
+		case 3:
 
-	/*line.endingPos.x = line.startingPos.x + 10;
-	line.endingPos.y = line.startingPos.y + 10;
-	line.endingPos.z = line.startingPos.z + 10;*/
+			verLinesPos[i].posY = UP;
+			verLinesPos[i].posX = LEFT;
 
+			setVertexLines(verLinesPos[i], verLinesPos[(i - 1)].B.endingPos.x, verLinesPos[i - 1].B.endingPos.y, verLinesPos[(i - 1)].B.endingPos.z, randLength);
+
+			break;
+		case 4:
+
+			verLinesPos[i].posX = LEFT;
+
+			setVertexLines(verLinesPos[i], verLinesPos[(i - 1)].B.endingPos.x, verLinesPos[(i - 1)].B.endingPos.y, verLinesPos[(i - 1)].B.endingPos.z, randLength);
+
+			break;
+		case 5:
+
+			verLinesPos[i].posX = LEFT;
+			verLinesPos[i].posZ = IN;
+
+			setVertexLines(verLinesPos[i], verLinesPos[(i - 1)].C.endingPos.x, verLinesPos[(i - 1)].C.endingPos.y, verLinesPos[(i - 1)].C.endingPos.z, randLength);
+
+			break;
+		case 6:
+
+			verLinesPos[i].posX = LEFT;
+			verLinesPos[i].posY = UP;
+			verLinesPos[i].posZ = IN;
+
+			setVertexLines(verLinesPos[i], verLinesPos[(i - 1)].A.endingPos.x, verLinesPos[(i - 1)].A.endingPos.y, verLinesPos[(i - 1)].A.endingPos.z, randLength);
+
+			break;
+		case 7:
+
+			verLinesPos[i].posY = UP;
+			verLinesPos[i].posZ = IN;
+
+			setVertexLines(verLinesPos[i], verLinesPos[(i - 1)].B.endingPos.x, verLinesPos[(i - 1)].B.endingPos.y, verLinesPos[(i - 1)].B.endingPos.z, randLength);
+
+			break;
+		case 8:
+
+			verLinesPos[i].posZ = IN;
+
+			setVertexLines(verLinesPos[i], verLinesPos[(i - 1)].B.endingPos.x, verLinesPos[(i - 1)].B.endingPos.y, verLinesPos[(i - 1)].B.endingPos.z, randLength);
+
+			break;
+		default:
+			break;
+		}
+	}
+	
 	SetTargetFPS(60);
 
 	InitWindow(windowWidth, windowHeight, "Coso");
@@ -88,7 +154,7 @@ int main()
 	{
 		update(camera);
 
-		draw(camera, verLinesPos, verLinesPos2);
+		draw(camera, verLinesPos, amountOfVertexs);
 	}
 }
 
@@ -101,11 +167,10 @@ void update(Camera3D& camera)
 
 	// |A| = √(A_x² + A_y² + A_z²)
 
-	int line3Magnitud = line3.endingPos.x + line3.endingPos.y + line3.endingPos.z;
-	cout << line3Magnitud << endl;
+
 }
 
-void draw(Camera3D camera, VertexLines vertexLines, VertexLines vertexLines2)
+void draw(Camera3D camera, VertexLines vertexLines[], int amountOfVertexs)
 {
 	BeginDrawing();
 
@@ -113,63 +178,106 @@ void draw(Camera3D camera, VertexLines vertexLines, VertexLines vertexLines2)
 
 	ClearBackground(BLACK);
 
-	printVertexLines(vertexLines);
-	printVertexLines(vertexLines2);
+	printVertexLines(vertexLines, amountOfVertexs);
 
 	/*DrawLine3D(vertexLines.A.startingPos, vertexLines.A.endingPos, vertexLines.A.color);
 	DrawLine3D(vertexLines.B.startingPos, vertexLines.B.endingPos, vertexLines.B.color);
 	DrawLine3D(vertexLines.C.startingPos, vertexLines.C.endingPos, vertexLines.C.color);*/
 
-	//DrawLine3D(line1.startingPos, line1.endingPos, line1.color);
-	//DrawLine3D(line2.startingPos, line2.endingPos, line1.color);
-	//DrawLine3D(line3.startingPos, line3.endingPos, line1.color);
-
 	EndMode3D();
 
 	DrawText(TextFormat("%02f", camera.position.x), 10, 10, 20, WHITE);
+	DrawText(TextFormat("%02f", camera.position.y), 10, 40, 20, WHITE);
 
 	EndDrawing();
 }
 
-void setVertexLines(VertexLines& vertexLines, float startingPosX, float startingPosY, float startingPosZ)
+void setVertexLines(VertexLines& vertexLines, float startingPosX, float startingPosY, float startingPosZ, float lenght)
 {
 	vertexLines.A.startingPos.x = startingPosX;
 	vertexLines.A.startingPos.y = startingPosY;
 	vertexLines.A.startingPos.z = startingPosZ;
-	
-	vertexLines.A.endingPos.x = startingPosX * 2;
-	vertexLines.A.endingPos.y = startingPosY / 2;
-	vertexLines.A.endingPos.z = startingPosZ * 2;
 
-	vertexLines.B.startingPos.x = vertexLines.A.startingPos.x;
-	vertexLines.B.startingPos.y = vertexLines.A.startingPos.y;
-	vertexLines.B.startingPos.z = vertexLines.A.startingPos.z;
+	vertexLines.B.startingPos.x = startingPosX;
+	vertexLines.B.startingPos.y = startingPosY;
+	vertexLines.B.startingPos.z = startingPosZ;
 
-	vertexLines.B.endingPos.x = startingPosX / 2;
-	vertexLines.B.endingPos.y = startingPosY * 2;
-	vertexLines.B.endingPos.z = startingPosZ * 2;
+	vertexLines.C.startingPos.x = startingPosX;
+	vertexLines.C.startingPos.y = startingPosY;
+	vertexLines.C.startingPos.z = startingPosZ;
 
-	vertexLines.C.startingPos.x = vertexLines.A.startingPos.x;
-	vertexLines.C.startingPos.y = vertexLines.A.startingPos.y;
-	vertexLines.C.startingPos.z = vertexLines.A.startingPos.z;
+	switch (vertexLines.posY)
+	{
+	case UP:
 
-	vertexLines.C.endingPos.x = startingPosX / 2;
-	vertexLines.C.endingPos.y = startingPosY / 2;
-	vertexLines.C.endingPos.z = startingPosZ * 2;
+		vertexLines.A.endingPos.x = startingPosX;
+		vertexLines.A.endingPos.y = startingPosY + lenght;
+		vertexLines.A.endingPos.z = startingPosZ;
+
+		break;
+	case DOWN:
+
+		vertexLines.A.endingPos.x = startingPosX;
+		vertexLines.A.endingPos.y = startingPosY - lenght;
+		vertexLines.A.endingPos.z = startingPosZ;
+
+		break;
+	default:
+		break;
+	}
+
+	switch (vertexLines.posX)
+	{
+	case RIGHT:
+
+		vertexLines.B.endingPos.x = startingPosX - lenght * 2;
+		vertexLines.B.endingPos.y = startingPosY;
+		vertexLines.B.endingPos.z = startingPosZ;
+
+		break;
+	case LEFT:
+
+		vertexLines.B.endingPos.x = startingPosX + lenght * 2;
+		vertexLines.B.endingPos.y = startingPosY;
+		vertexLines.B.endingPos.z = startingPosZ;
+
+		break;
+	default:
+		break;
+	}
+
+	switch (vertexLines.posZ)
+	{
+	case IN:
+
+		vertexLines.C.endingPos.x = startingPosX;
+		vertexLines.C.endingPos.y = startingPosY;
+		vertexLines.C.endingPos.z = startingPosZ + lenght;
+
+		break;
+	case OUT:
+		
+		vertexLines.C.endingPos.x = startingPosX;
+		vertexLines.C.endingPos.y = startingPosY;
+		vertexLines.C.endingPos.z = startingPosZ - lenght;
+		
+		break;
+	default:
+		break;
+	}
 }
 
-void printVertexLines(VertexLines vertexLines)
+void printVertexLines(VertexLines vertexLines[], int amountOfVertexs)
 {
-	DrawLine3D(vertexLines.A.startingPos, vertexLines.A.endingPos, vertexLines.A.color);
-	DrawLine3D(vertexLines.B.startingPos, vertexLines.B.endingPos, vertexLines.B.color);
-	DrawLine3D(vertexLines.C.startingPos, vertexLines.C.endingPos, vertexLines.C.color);
+	for (int i = 0; i < amountOfVertexs; i++)
+	{
+		DrawLine3D(vertexLines[i].A.startingPos, vertexLines[i].A.endingPos, RED);
+		DrawLine3D(vertexLines[i].B.startingPos, vertexLines[i].B.endingPos, GREEN);
+		DrawLine3D(vertexLines[i].C.startingPos, vertexLines[i].C.endingPos, BLUE);
+	}
 }
 
-Vector3 Cross()
+float vectorMagnitude(Vector3 v)
 {
-	return {
-		//line1.y  line2.z - A.z  B.y,
-		//A.z  B.x - A.x  B.z,
-		//A.x  B.y - A.y  B.x
-	};
+	return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 }
