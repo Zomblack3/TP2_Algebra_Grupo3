@@ -42,27 +42,28 @@ struct VertexLines
 	VERTEX_X_POS posX = RIGHT;
 	VERTEX_Y_POS posY = DOWN;
 	VERTEX_Z_POS posZ = OUT;
+};
 
-	int id = 0;
+struct Step
+{
+	VertexLines vertexLinesPos[recSides] = { };
 };
 
 const int windowWidth = 750;
 const int windowHeight = 600;
 
-void update(Camera3D& camera);
-void draw(Camera3D camera, VertexLines vertexLines[], int amountOfVertexs);
+void update(Camera3D& camera, vector<Step> steps);
+void draw(Camera3D camera, vector<Step> steps, int amountOfVertexs);
 
 void setVertexLines(VertexLines& vertexLines, float startingPosX, float startingPosY, float startingPosZ, float lenght);
 void printVertexLines(VertexLines vertexLines[], int amountOfVertexs);
-void setStep(VertexLines verLinesPos[], int amountOfVertexs, int randLength);
+void setStep(VertexLines verLinesPos[], int amountOfVertexs, int randLength, int startingPosX, int startingPosY, int startingPosZ);
 
 float vectorMagnitude(Vector3 v);
 
 int main()
 {
 	srand(time(nullptr));
-
-	const int amountOfVertexs = 8;
 
 	Camera3D camera = { 0 };
 	camera.position = { 0.0f, 00.0f, 10.0f };
@@ -74,11 +75,19 @@ int main()
 	//Line lineA = { {0,0,0}, {2,0,0}, RED };   // vector A
 	//Line lineB = { {0,0,0}, {0,-2,0}, GREEN }; // vector B (90° en XY)
 
-	int randLength = rand() % 20;
+	Step basicStep = { };
+	vector<Step> steps = { basicStep };
 
-	VertexLines verLinesPos[amountOfVertexs] = { };
-	
-	setStep(verLinesPos, amountOfVertexs, randLength);
+	int randLength = rand() % 20;
+	int actualStep = 0;
+	int totalSteps = 5;
+
+	setStep(steps[actualStep].vertexLinesPos, recSides, randLength, 0, 0, 0);
+
+	steps.push_back(basicStep);
+	actualStep++;
+
+	setStep(steps[actualStep].vertexLinesPos, recSides, randLength / 2, steps[actualStep - 1].vertexLinesPos[0].B.startingPos.x - (randLength / 4.0f), randLength / 4, steps[actualStep - 1].vertexLinesPos[0].C.startingPos.z - (randLength / 4.0f));
 
 	SetTargetFPS(60);
 
@@ -86,25 +95,23 @@ int main()
 
 	while (!WindowShouldClose())
 	{
-		update(camera);
+		UpdateCamera(&camera, CAMERA_FREE);
 
-		draw(camera, verLinesPos, amountOfVertexs);
+		update(camera, steps);
+
+		draw(camera, steps, recSides);
 	}
 }
 
-void update(Camera3D& camera)
+void update(Camera3D& camera, vector<Step> steps)
 {
-	UpdateCamera(&camera, CAMERA_FREE);
-
 	if (IsKeyPressed(KEY_Z))
-		camera.position = { 10.0f, 10.0f, 10.0f };
+		camera.position = { steps[0].vertexLinesPos[0].A.startingPos.x - 10, steps[0].vertexLinesPos[0].A.startingPos.y- 10, steps[0].vertexLinesPos[0].A.startingPos.z - 10 };
 
 	// |A| = √(A_x² + A_y² + A_z²)
-
-
 }
 
-void draw(Camera3D camera, VertexLines vertexLines[], int amountOfVertexs)
+void draw(Camera3D camera, vector<Step> steps, int amountOfVertexs)
 {
 	BeginDrawing();
 
@@ -112,16 +119,15 @@ void draw(Camera3D camera, VertexLines vertexLines[], int amountOfVertexs)
 
 	ClearBackground(BLACK);
 
-	printVertexLines(vertexLines, amountOfVertexs);
-
-	/*DrawLine3D(vertexLines.A.startingPos, vertexLines.A.endingPos, vertexLines.A.color);
-	DrawLine3D(vertexLines.B.startingPos, vertexLines.B.endingPos, vertexLines.B.color);
-	DrawLine3D(vertexLines.C.startingPos, vertexLines.C.endingPos, vertexLines.C.color);*/
+	for (int i = 0; i < steps.size(); i++)
+		printVertexLines(steps[i].vertexLinesPos, amountOfVertexs);
+	
+	//printVertexLines(vertexLines, amountOfVertexs);
 
 	EndMode3D();
 
-	DrawText(TextFormat("%02f", camera.position.x), 10, 10, 20, WHITE);
-	DrawText(TextFormat("%02f", camera.position.y), 10, 40, 20, WHITE);
+	DrawText(TextFormat("%02f", vectorMagnitude(steps[0].vertexLinesPos[0].C.startingPos)), 10, 10, 20, WHITE);
+	DrawText(TextFormat("%02f", vectorMagnitude(steps[0].vertexLinesPos[0].C.endingPos)), 10, 40, 20, WHITE);
 
 	EndDrawing();
 }
@@ -145,14 +151,14 @@ void setVertexLines(VertexLines& vertexLines, float startingPosX, float starting
 	case UP:
 
 		vertexLines.A.endingPos.x = startingPosX;
-		vertexLines.A.endingPos.y = startingPosY + lenght;
+		vertexLines.A.endingPos.y = startingPosY + (lenght / 2);
 		vertexLines.A.endingPos.z = startingPosZ;
 
 		break;
 	case DOWN:
 
 		vertexLines.A.endingPos.x = startingPosX;
-		vertexLines.A.endingPos.y = startingPosY - lenght;
+		vertexLines.A.endingPos.y = startingPosY - (lenght / 2);
 		vertexLines.A.endingPos.z = startingPosZ;
 
 		break;
@@ -164,14 +170,14 @@ void setVertexLines(VertexLines& vertexLines, float startingPosX, float starting
 	{
 	case RIGHT:
 
-		vertexLines.B.endingPos.x = startingPosX - lenght * 2;
+		vertexLines.B.endingPos.x = startingPosX - (lenght * 2);
 		vertexLines.B.endingPos.y = startingPosY;
 		vertexLines.B.endingPos.z = startingPosZ;
 
 		break;
 	case LEFT:
 
-		vertexLines.B.endingPos.x = startingPosX + lenght * 2;
+		vertexLines.B.endingPos.x = startingPosX + (lenght * 2);
 		vertexLines.B.endingPos.y = startingPosY;
 		vertexLines.B.endingPos.z = startingPosZ;
 
@@ -211,7 +217,7 @@ void printVertexLines(VertexLines vertexLines[], int amountOfVertexs)
 	}
 }
 
-void setStep(VertexLines verLinesPos[], int amountOfVertexs, int randLength)
+void setStep(VertexLines verLinesPos[], int amountOfVertexs, int randLength, int startingPosX, int startingPosY, int startingPosZ)
 {
 	for (int i = 0; i < amountOfVertexs; i++)
 	{
@@ -220,7 +226,7 @@ void setStep(VertexLines verLinesPos[], int amountOfVertexs, int randLength)
 		{
 		case 1:
 
-			setVertexLines(verLinesPos[i], 0, 0, 0, randLength);
+			setVertexLines(verLinesPos[i], startingPosX, startingPosY, startingPosZ, randLength);
 
 			break;
 		case 2:
